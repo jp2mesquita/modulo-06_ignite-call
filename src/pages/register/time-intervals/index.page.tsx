@@ -1,3 +1,7 @@
+import { useSession } from 'next-auth/react'
+import { Controller, useFieldArray, useForm } from 'react-hook-form'
+import { z } from 'zod'
+
 import {
   Button,
   Checkbox,
@@ -6,8 +10,6 @@ import {
   Text,
   TextInput,
 } from '@ignite-ui/react'
-import { useSession } from 'next-auth/react'
-
 import { ArrowRight } from 'phosphor-react'
 
 import { Container, Header } from '../styles'
@@ -18,9 +20,43 @@ import {
   Intervalinputs,
   IntervalItem,
 } from './styles'
+import { getWeekDays } from '../../../utils/get-week-days'
+
+const timeIntervalsFormSchema = z.object({})
 
 export default function TimeIntervals() {
   const { data: session } = useSession()
+
+  const {
+    register,
+    watch,
+    handleSubmit,
+    control,
+    formState: { isSubmitting, errors },
+  } = useForm({
+    defaultValues: {
+      intervals: [
+        { weekDay: 0, enable: false, startTime: '08:00', endTime: '18:00' },
+        { weekDay: 1, enable: true, startTime: '08:00', endTime: '18:00' },
+        { weekDay: 2, enable: true, startTime: '08:00', endTime: '18:00' },
+        { weekDay: 3, enable: true, startTime: '08:00', endTime: '18:00' },
+        { weekDay: 4, enable: true, startTime: '08:00', endTime: '18:00' },
+        { weekDay: 5, enable: true, startTime: '08:00', endTime: '18:00' },
+        { weekDay: 6, enable: false, startTime: '08:00', endTime: '18:00' },
+      ],
+    },
+  })
+
+  const weekDays = getWeekDays()
+
+  const { fields } = useFieldArray({
+    control,
+    name: 'intervals',
+  })
+
+  const intervals = watch('intervals')
+
+  async function handleSetTimeIntervals() {}
 
   return (
     <Container>
@@ -34,84 +70,48 @@ export default function TimeIntervals() {
         <MultiStep size={4} currentStep={3} />
       </Header>
 
-      <IntervalBox as="form">
+      <IntervalBox as="form" onSubmit={handleSubmit(handleSetTimeIntervals)}>
         <IntervalContainer>
-          <IntervalItem>
-            <IntervalDay>
-              <Checkbox />
-              <Text>Segunda-feira</Text>
-            </IntervalDay>
-            <Intervalinputs>
-              <TextInput size="sm" type="time" step={60} />
-              <TextInput size="sm" type="time" step={60} />
-            </Intervalinputs>
-          </IntervalItem>
+          {fields.map((field, index) => {
+            return (
+              <IntervalItem key={field.id}>
+                <IntervalDay>
+                  <Controller
+                    name={`intervals.${index}.enable`}
+                    control={control}
+                    render={({ field }) => {
+                      return (
+                        <Checkbox
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked === true)
+                          }}
+                          checked={field.value}
+                        />
+                      )
+                    }}
+                  />
 
-          <IntervalItem>
-            <IntervalDay>
-              <Checkbox />
-              <Text>Terça-feira</Text>
-            </IntervalDay>
-            <Intervalinputs>
-              <TextInput size="sm" type="time" step={60} />
-              <TextInput size="sm" type="time" step={60} />
-            </Intervalinputs>
-          </IntervalItem>
-
-          <IntervalItem>
-            <IntervalDay>
-              <Checkbox />
-              <Text>Quarta-feira</Text>
-            </IntervalDay>
-            <Intervalinputs>
-              <TextInput size="sm" type="time" step={60} />
-              <TextInput size="sm" type="time" step={60} />
-            </Intervalinputs>
-          </IntervalItem>
-
-          <IntervalItem>
-            <IntervalDay>
-              <Checkbox />
-              <Text>Quinta-feira</Text>
-            </IntervalDay>
-            <Intervalinputs>
-              <TextInput size="sm" type="time" step={60} />
-              <TextInput size="sm" type="time" step={60} />
-            </Intervalinputs>
-          </IntervalItem>
-
-          <IntervalItem>
-            <IntervalDay>
-              <Checkbox />
-              <Text>Sexta-feira</Text>
-            </IntervalDay>
-            <Intervalinputs>
-              <TextInput size="sm" type="time" step={60} />
-              <TextInput size="sm" type="time" step={60} />
-            </Intervalinputs>
-          </IntervalItem>
-
-          <IntervalItem>
-            <IntervalDay>
-              <Checkbox />
-              <Text>Sábado</Text>
-            </IntervalDay>
-            <Intervalinputs>
-              <TextInput size="sm" type="time" step={60} />
-              <TextInput size="sm" type="time" step={60} />
-            </Intervalinputs>
-          </IntervalItem>
-
-          <IntervalItem>
-            <IntervalDay>
-              <Checkbox />
-              <Text>Domingo</Text>
-            </IntervalDay>
-            <Intervalinputs>
-              <TextInput size="sm" type="time" step={60} />
-              <TextInput size="sm" type="time" step={60} />
-            </Intervalinputs>
-          </IntervalItem>
+                  <Text>{weekDays[field.weekDay]}</Text>
+                </IntervalDay>
+                <Intervalinputs>
+                  <TextInput
+                    size="sm"
+                    type="time"
+                    step={60}
+                    disabled={!intervals[index].enable}
+                    {...register(`intervals.${index}.startTime`)}
+                  />
+                  <TextInput
+                    size="sm"
+                    type="time"
+                    step={60}
+                    disabled={!intervals[index].enable}
+                    {...register(`intervals.${index}.endTime`)}
+                  />
+                </Intervalinputs>
+              </IntervalItem>
+            )
+          })}
         </IntervalContainer>
 
         <Button type="submit" disabled={!session}>
