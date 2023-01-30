@@ -9,11 +9,13 @@ import {
 } from './styles'
 
 export function CalendarSetp() {
-  const [isDateSelected] = useState(true)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+
+  const isDateSelected = !!selectedDate
 
   return (
     <Container isTimePickerOpen={isDateSelected}>
-      <Calendar />
+      <Calendar selectedDate={selectedDate} onDateSeleceted={setSelectedDate} />
 
       {isDateSelected && (
         <TimePicker>
